@@ -1,0 +1,74 @@
+<modification>
+        <name>Replace for Product Based Shipping Module</name>
+		<id>Replace for Product Based Shipping Module</id>
+		<code>00002</code>
+        <version>1.5.1.3</version>
+        <author>Asif</author>
+		<link>http://www.heurixtics.com</link>
+        <file path="admin/controller/catalog/product.php">
+                <operation>
+                        <search><![CDATA[
+                   		$data['tab_design'] = $this->language->get('tab_design');
+                        ]]></search>
+                        <add  position="after"><![CDATA[
+                        $data['entry_shipping_price'] = $this->language->get('entry_shipping_price');
+                        ]]></add>
+                </operation>
+				<operation>
+                        <search ><![CDATA[
+                   		$data['stock_statuses'] = $this->model_localisation_stock_status->getStockStatuses();
+                        ]]></search>
+                        <add position="before"><![CDATA[
+                        if (isset($this->request->post['shipping_price'])) {
+							$data['shipping_price'] = $this->request->post['shipping_price'];
+						} else if (isset($product_info)) {
+							$data['shipping_price'] = $product_info['shipping_price'];
+						} else {
+							$data['shipping_price'] = '';
+						}
+                        ]]></add>
+                </operation>
+        </file>
+		<file path="admin/language/english/catalog/product.php">
+                <operation>
+                        <search ><![CDATA[
+                   		$_['entry_layout']           = 'Layout Override';
+                        ]]></search>
+                        <add position="after"><![CDATA[
+                        $_['entry_shipping_price']	 = '<span data-toggle="tooltip" title="For product based shipping module">Shipping cost:</span>';
+                        ]]></add>
+                </operation>
+        </file>
+		<file path="admin/model/catalog/product.php">
+                <operation>
+                        <search ><![CDATA[
+						$this->db->query("INSERT INTO " . DB_PREFIX . "product SET
+						]]>
+						</search>
+                        <add position="replace"><![CDATA[
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product SET shipping_price = '". (float)$data['shipping_price'] ."', 
+                        ]]></add>
+                </operation>
+				<operation>
+                        <search ><![CDATA[
+                   		$this->db->query("UPDATE " . DB_PREFIX . "product SET model
+                        ]]></search>
+                        <add position="replace"><![CDATA[
+                        $this->db->query("UPDATE " . DB_PREFIX . "product SET shipping_price = '". (float)$data['shipping_price'] ."', model 
+                        ]]></add>
+                </operation>
+        </file>
+		<file path="admin/view/template/catalog/product_form.tpl">
+                <operation>
+                        <search ><![CDATA[<input type="text" name="price" value="<?php echo $price; ?>" placeholder="<?php echo $entry_price; ?>" id="input-price" class="form-control" />]]></search>
+                        <add position="after" offset="2"><![CDATA[
+						<div class="form-group">
+                <label class="col-sm-2 control-label" for="input-price"><?php echo $entry_shipping_price; ?></label>
+                <div class="col-sm-10">
+                  <input type="text" name="shipping_price" value="<?php echo $shipping_price; ?>" placeholder="<?php echo $shipping_price; ?>" id="shipping_price" class="form-control" />
+                </div>
+              </div>
+                        ]]></add>
+                </operation>
+        </file>
+</modification>

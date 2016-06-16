@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>CherryAnt Image Colored Product</name>
+	<code>1</code>
+    <version>1.0</version>
+    <author>CherryAnt.com</author>
+    <link>http://www.cherryant.com</link>
+    <file path="admin/controller/catalog/option.php">
+        <operation>
+            <search index="1,2"><![CDATA[
+            $this->load->model('catalog/option');
+            ]]></search>
+            <add position="after"><![CDATA[
+			$this->document->addStyle('view/javascript/colpick/colpick.css');
+			$this->document->addScript('view/javascript/colpick/colpick.js');
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
+            ]]></search>
+            <add position="after"><![CDATA[
+			if (isset($this->request->post['color_option_value']) && $this->request->post['type'] == 'color')
+				$this->request->post['option_value'] = $this->request->post['color_option_value'];
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            $data['text_radio'] = $this->language->get('text_radio');
+            ]]></search>
+            <add position="after"><![CDATA[
+			$data['text_color'] = $this->language->get('text_color');
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            $data['entry_image'] = $this->language->get('entry_image');
+            ]]></search>
+            <add position="after"><![CDATA[
+			$data['entry_color'] = $this->language->get('entry_color');
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            if (isset($this->error['option_value'])) {
+            ]]></search>
+            <add position="after" offset="5"><![CDATA[
+			if (isset($this->error['color_option_value'])) {
+				$data['error_color_option_value'] = $this->error['color_option_value'];
+			} else {
+				$data['error_color_option_value'] = array();
+			}
+            ]]></add>
+        </operation>
+        <operation>
+            <search index="0"><![CDATA[
+            if (isset($this->request->post['option_value'])) {
+            ]]></search>
+            <add position="replace" offset="6"><![CDATA[
+			if (isset($this->request->post['option_value']) || isset($this->request->post['color_option_value'])) {
+				if($data['type']=='color'){
+					$color_option_values = $this->request->post['color_option_value'];
+					$option_values = array();
+				}else{
+					$option_values = $this->request->post['option_value'];
+					$color_option_values = array();
+				}
+			} elseif (isset($this->request->get['option_id'])) {
+				if($data['type']=='color'){
+					$color_option_values = $this->model_catalog_option->getOptionValueDescriptions($this->request->get['option_id']);
+					$option_values = array();
+				}else{
+					$option_values = $this->model_catalog_option->getOptionValueDescriptions($this->request->get['option_id']);
+					$color_option_values = array();
+				}
+			} else {
+				$color_option_values = array();
+				$option_values = array();
+			}
+            ]]></add>
+        </operation>
+		<operation>
+            <search><![CDATA[
+            $data['option_values'] = array();
+            ]]></search>
+            <add position="after"><![CDATA[
+			$data['color_option_values'] = array();
+            ]]></add>
+        </operation>
+		<operation>
+            <search><![CDATA[
+            $data['placeholder'] = $this->model_tool_image->resize('no_image.png', 100, 100);
+            ]]></search>
+            <add position="before"><![CDATA[
+			foreach ($color_option_values as $color_option_value) {
+				if ($color_option_value['image'] && file_exists(DIR_IMAGE . $color_option_value['image'])) {
+					$image = $color_option_value['image'];
+				} else {
+					$image = 'no_image.png';
+				}
+				$data['color_option_values'][] = array(
+					'option_value_id'          => $color_option_value['option_value_id'],
+					'option_value_description' => $color_option_value['option_value_description'],
+					'image'                    => ($image=='no_image.png' && $color_option_value['image']) ? $color_option_value['image'] : $image,
+					'hexcolor'				   => ($image=='no_image.png' && $color_option_value['image']) ? $color_option_value['image'] : '000000',
+					'thumb'                    => $this->model_tool_image->resize($image, 100, 100),
+					'sort_order'               => $color_option_value['sort_order']
+				);
+			}
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            if (($this->request->post['type'] == 'select' || $this->request->post['type'] == 'radio' || $this->request->post['type'] == 'checkbox') && !isset($this->request->post['option_value'])) {
+            ]]></search>
+            <add position="replace" offset="12"><![CDATA[
+			if (($this->request->post['type'] == 'select' || $this->request->post['type'] == 'radio' || $this->request->post['type'] == 'checkbox') && !isset($this->request->post['option_value'])) {
+				$this->error['warning'] = $this->language->get('error_type');
+			}
+	
+			if (($this->request->post['type'] == 'color') && !isset($this->request->post['color_option_value'])) {
+				$this->error['warning'] = $this->language->get('error_type');
+			}
+			
+			if (isset($this->request->post['option_value']) && $this->request->post['type'] != 'color') {
+				foreach ($this->request->post['option_value'] as $option_value_id => $option_value) {
+					foreach ($option_value['option_value_description'] as $language_id => $option_value_description) {
+						if ((utf8_strlen($option_value_description['name']) < 1) || (utf8_strlen($option_value_description['name']) > 128)) {
+							$this->error['option_value'][$option_value_id][$language_id] = $this->language->get('error_option_value'); 
+						}					
+					}
+				}	
+			}
+	
+			if (isset($this->request->post['color_option_value']) && $this->request->post['type'] == 'color') {
+				foreach ($this->request->post['color_option_value'] as $option_value_id => $option_value) {
+					foreach ($option_value['option_value_description'] as $language_id => $option_value_description) {
+						if ((utf8_strlen($option_value_description['name']) < 1) || (utf8_strlen($option_value_description['name']) > 128)) {
+							$this->error['color_option_value'][$option_value_id][$language_id] = $this->language->get('error_option_value'); 
+						}					
+					}
+				}	
+			}
+            ]]></add>
+        </operation>
+		<operation>
+            <search><![CDATA[
+            if ($option['type'] == 'select' || $option['type'] == 'radio' || $option['type'] == 'checkbox' || $option['type'] == 'image') {
+            ]]></search>
+            <add position="replace"><![CDATA[
+			if ($option['type'] == 'select' || $option['type'] == 'radio' || $option['type'] == 'checkbox' || $option['type'] == 'image' || $option['type'] == 'color') {
+            ]]></add>
+        </operation>
+    </file>
+    <file path="admin/controller/catalog/product.php">
+        <operation>
+            <search><![CDATA[
+            if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+            ]]></search>
+            <add position="replace"><![CDATA[
+			if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image' || $product_option['type'] == 'color') {
+            ]]></add>
+        </operation>
+    </file>
+    <file path="admin/language/english/catalog/option.php">
+        <operation>
+            <search><![CDATA[
+            $_['text_radio']          = 'Radio';
+            ]]></search>
+            <add position="after"><![CDATA[
+			$_['text_color']          = 'Color';
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            $_['entry_image']         = 'Image';
+            ]]></search>
+            <add position="after"><![CDATA[
+			$_['entry_color']        = 'Color:';
+            ]]></add>
+        </operation>
+    </file>
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search><![CDATA[
+            if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+            ]]></search>
+            <add position="replace"><![CDATA[
+			if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image' || $product_option['type'] == 'color') {
+            ]]></add>
+        </operation>
+    </file>
+    <file path="admin/view/template/catalog/option_form.tpl">
+        <operation>
+            <search><![CDATA[
+            <?php if ($type == 'checkbox') { ?>
+            ]]></search>
+            <add position="before"><![CDATA[
+			<?php if ($type == 'color') { ?>
+                <option value="color" selected><?php echo $text_color; ?></option>
+			<?php } else { ?>
+                <option value="color"><?php echo $text_color; ?></option>
+            <?php } ?>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            </form>
+            ]]></search>
+            <add position="before"><![CDATA[
+          <table id="color_option-value" class="table table-striped table-bordered table-hover">
+            <thead>
+              <tr>
+                <td class="text-left required"><?php echo $entry_option_value; ?></td>
+                <td class="text-left"><?php echo $entry_color; ?></td>
+                <td class="text-right"><?php echo $entry_sort_order; ?></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+			  <?php $color_option_value_row = 0; ?>
+			  <?php foreach ($color_option_values as $color_option_value) { ?>
+              <tr id="-value-row<?php echo $color_option_value_row; ?>">
+                <td class="text-left"><input type="hidden" name="color_option_value[<?php echo $color_option_value_row; ?>][option_value_id]" value="<?php echo $color_option_value['option_value_id']; ?>" />
+                  <?php foreach ($languages as $language) { ?>
+                  <div class="input-group"><span class="input-group-addon"><img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" /></span>
+                    <input type="text" name="color_option_value[<?php echo $color_option_value_row; ?>][option_value_description][<?php echo $language['language_id']; ?>][name]" value="<?php echo isset($color_option_value['option_value_description'][$language['language_id']]) ? $color_option_value['option_value_description'][$language['language_id']]['name'] : ''; ?>" placeholder="<?php echo $entry_option_value; ?>" class="form-control" />
+                  </div>
+                  <?php if (isset($error_color_option_value[$color_option_value_row][$language['language_id']])) { ?>
+                  <div class="text-danger"><?php echo $error_color_option_value[$color_option_value_row][$language['language_id']]; ?></div>
+                  <?php } ?>
+                  <?php } ?></td>
+				  <td class="text-left" style="width:250px">
+						<div class="image" style="float:left">
+							<a href="" id="color_thumb-image<?php echo $color_option_value_row; ?>" data-toggle="image" class="img-thumbnail"><img src="<?php echo $color_option_value['thumb']; ?>" alt="" title="" data-placeholder="<?php echo $placeholder; ?>" /></a><input type="hidden" name="color_option_value[<?php echo $color_option_value_row; ?>][image]" value="<?php echo $color_option_value['image']; ?>" id="color_image<?php echo $color_option_value_row; ?>"  />
+						</div>
+						<div style="float:left;margin-left: 20px;margin-right: 20px;padding-top: 72px;">
+							-
+						</div>
+						<div style="float:left;padding-top: 72px;">
+							<input type="text" value="<?php echo $color_option_value['hexcolor']; ?>" style="border-right:20px solid #<?php echo $color_option_value['hexcolor']; ?>;" class="colpick" id="color<?php echo $color_option_value_row; ?>" />
+						</div>
+				  </td>
+                <td class="text-right"><input type="text" name="color_option_value[<?php echo $color_option_value_row; ?>][sort_order]" value="<?php echo $color_option_value['sort_order']; ?>" class="form-control" /></td>
+                <td class="text-left"><button type="button" onclick="$('#color_option-value-row<?php echo $color_option_value_row; ?>').remove();" data-toggle="tooltip" title="<?php echo $button_remove; ?>" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+				</tr>
+	<script type="text/javascript"><!--
+	$(document).ready(function(){
+		$('#color<?php echo $color_option_value_row; ?>').colpick({
+			color:'<?php echo $color_option_value['hexcolor']; ?>',
+			layout:'hex',
+			submit:0,
+			colorScheme:'dark',
+			onChange:function(hsb,hex,rgb,el,bySetColor) {
+				$('#color_image<?php echo $color_option_value_row; ?>').val(hex);
+				$('#color_thumb-image<?php echo $color_option_value_row; ?>').find('img').attr('src', $('#color_thumb-image<?php echo $color_option_value_row; ?>').find('img').attr('data-placeholder'));
+				$(el).css('border-color','#'+hex);
+				if(!bySetColor) $(el).val(hex);
+			}
+		}).keyup(function(){
+			$(this).colpickSetColor(this.value);
+		});
+	});
+	//--></script>          
+			  <?php $color_option_value_row++; ?>
+			  <?php } ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3"></td>
+                <td class="text-left"><button type="button" onclick="addColorOptionValue();" data-toggle="tooltip" title="<?php echo $button_option_value_add; ?>" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+              </tr>
+            </tfoot>
+			</table>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            $('select[name=\'type\']').on('change', function() {
+            ]]></search>
+            <add position="replace" offset="6"><![CDATA[
+			$('select[name=\'type\']').on('change', function() {
+				if (this.value == 'select' || this.value == 'radio' || this.value == 'checkbox' || this.value == 'image') {
+					$('#option-value').show();
+				} else {
+					$('#option-value').hide();
+				}
+			
+				if (this.value == 'color') {
+					$('#color_option-value').show();
+				} else {
+					$('#color_option-value').hide();
+				}	
+			});
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            //--></script></div>
+            ]]></search>
+            <add position="before"><![CDATA[
+			var color_option_value_row = <?php echo $color_option_value_row; ?>;
+
+			function addColorOptionValue() {
+				html = '  <tr id="color_option-value-row' + color_option_value_row + '">';
+			    html += '  <td class="text-left"><input type="hidden" name="color_option_value[' + color_option_value_row + '][option_value_id]" value="" />';
+				<?php foreach ($languages as $language) { ?>
+				html += '    <div class="input-group">';
+				html += '      <span class="input-group-addon"><img src="view/image/flags/<?php echo $language['image']; ?>" title="<?php echo $language['name']; ?>" /></span><input type="text" name="color_option_value[' + color_option_value_row + '][option_value_description][<?php echo $language['language_id']; ?>][name]" value="" placeholder="<?php echo $entry_option_value; ?>" class="form-control" />';
+				html += '    </div>';
+				<?php } ?>
+				html += '    </td>';
+				html += '    <td class="text-left" style="width:250px">';
+				html += '		<div class="image" style="float:left">';
+				html += '			<a href="" id="color_thumb-image' + color_option_value_row + '" data-toggle="image" class="img-thumbnail"><img src="<?php echo $placeholder; ?>" alt="" title="" data-placeholder="<?php echo $placeholder; ?>" /></a><input type="hidden" name="color_option_value[' + color_option_value_row + '][image]" value="000000" id="color_image' + color_option_value_row + '" />';
+				html += '		</div>';
+				html += '		<div style="float:left;margin-left: 20px;margin-right: 20px;padding-top: 72px;">-</div>';
+				html += '		<div style="float:left;padding-top: 72px;"><input type="text" value="000000" class="colpick" id="color' + color_option_value_row + '" /></div>';
+				html += '	 </td>';
+				html += '  <td class="text-right"><input type="text" name="color_option_value[' + color_option_value_row + '][sort_order]" value="" placeholder="<?php echo $entry_sort_order; ?>" class="form-control" /></td>';
+				html += '  <td class="text-left"><button type="button" onclick="$(\'#color_option-value-row' + color_option_value_row + '\').remove();" data-toggle="tooltip" title="<?php echo $button_remove; ?>" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+				html += '</tr>';	
+				html += '<script type="text/javascript">';
+				html += "$('#color" + color_option_value_row + "').colpick({";
+				html += "		layout:'hex',";
+				html += "		color:'000000',";
+				html += "		submit:0,";
+				html += "		colorScheme:'dark',";
+				html += "		onChange:function(hsb,hex,rgb,el,bySetColor) {";
+				html += "			$('#color_image"+color_option_value_row+"').val(hex);";
+				html += "			$('#color_thumb-image"+color_option_value_row+"').find('img').attr('src', $('#color_thumb-image"+color_option_value_row+"').find('img').attr('data-placeholder'));";
+				html += "			$(el).css('border-color','#'+hex);";
+				html += "			if(!bySetColor) $(el).val(hex);";
+				html += "		}";
+				html += "}).keyup(function(){";
+				html += "	$(this).colpickSetColor(this.value);";
+				html += "});";
+				html += '</script>';
+				
+				$('#color_option-value tbody').append(html);
+				
+				color_option_value_row++;
+			}
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            <?php echo $footer; ?>
+            ]]></search>
+            <add position="before"><![CDATA[
+			<style>
+			input.colpick {
+				position:relative;
+				margin:0;
+				padding:0;
+				border:0;
+				width:70px;
+				border-right:20px solid black;
+				line-height:20px;
+				height:20px;
+				display:block;
+			}
+			</style>
+            ]]></add>
+        </operation>
+    </file>
+    <file path="admin/view/template/catalog/product_form.tpl">
+        <operation>
+            <search><![CDATA[
+            <?php if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') { ?>
+            ]]></search>
+            <add position="replace"><![CDATA[
+			<?php if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image' || $product_option['type'] == 'color') { ?>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            if (item['type'] == 'select' || item['type'] == 'radio' || item['type'] == 'checkbox' || item['type'] == 'image') {
+            ]]></search>
+            <add position="replace"><![CDATA[
+			if (item['type'] == 'select' || item['type'] == 'radio' || item['type'] == 'checkbox' || item['type'] == 'image' || item['type'] == 'color') {
+            ]]></add>
+        </operation>
+    </file>
+    <file path="catalog/controller/product/product.php">
+        <operation>
+            <search><![CDATA[
+            'image'                   => $this->model_tool_image->resize($option_value['image'], 50, 50),
+            ]]></search>
+            <add position="replace"><![CDATA[
+			'image'                   => ($option['type'] == 'color') ? $option_value['image'] : $this->model_tool_image->resize($option_value['image'], 50, 50),
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            public function getRecurringDescription() {
+            ]]></search>
+            <add position="before"><![CDATA[
+	public function gd_colorize ($image, $rplus, $gplus, $bplus, $pcnt){
+		$info = getimagesize($image);
+		if ($info['mime'] == 'image/gif') {
+			$im=imagecreatefromgif($image);
+		} elseif ($info['mime'] == 'image/png') {
+			$im=imagecreatefrompng($image);
+		} elseif ($info['mime'] == 'image/jpeg') {
+			$im=imagecreatefromjpeg($image);
+		}
+		
+		$imagex = imagesx($im);
+		$imagey = imagesy($im);
+
+		$imageret = imagecreatetruecolor($imagex, $imagey);
+		imagesavealpha($imageret, true);
+		imagealphablending($imageret, false);
+	  
+		for ($x = 0; $x <$imagex; ++$x) {
+			for ($y = 0; $y <$imagey; ++$y) {
+				$rgb = imagecolorat($im, $x, $y);
+				$color = imagecolorsforindex($im, $rgb);
+				$grey = floor(($color['red']+$color['green']+$color['blue'])/6);
+				if ($pcnt) {
+					$red = $rplus/32 + $grey/8 + $grey*($rplus/64);
+					$green = $rplus/32 + $grey/8 + $grey*($gplus/64);
+					$blue = $rplus/32 + $grey/8 + $grey*($bplus/64);
+				} else {
+					$red = $grey + $rplus;
+					$green = $grey + $gplus;
+					$blue = $grey + $bplus;
+				}
+				
+				if ($red > 255) $red = 255;
+				if ($green > 255) $green = 255;
+				if ($blue > 255) $blue = 255;
+				if ($red < 0) $red = 0;
+				if ($green < 0) $green = 0;
+				if ($blue < 0) $blue = 0;
+				
+				$newcol = imagecolorallocatealpha($imageret, $red,$green,$blue,$color['alpha']);
+				imagesetpixel ($imageret, $x, $y, $newcol);
+			}
+		}
+		return $imageret;
+	}
+	
+	public function imagecolres() {
+		$json = array();
+		$newFilenameImagesrc = '';
+		$newFilenameBigImagesrc = '';
+				
+		$imagesrc = urldecode($this->request->get['image']);
+		$imagesrc = str_replace(HTTP_SERVER, '', $imagesrc);
+		$imagesrc = str_replace('image/', '', $imagesrc);
+
+		$bigimagesrc = urldecode($this->request->get['bigimage']);
+		$bigimagesrc = str_replace(HTTP_SERVER, '', $bigimagesrc);
+		$bigimagesrc = str_replace('image/', '', $bigimagesrc);
+		
+		$color = $this->request->get['color'];
+		
+		$this->load->model('catalog/product');
+		$product_option_value = $this->model_catalog_product->getProductOptionValue($color);
+		$option_value = $this->model_catalog_product->getOptionValue($product_option_value['option_value_id']);
+		
+		//if its image and not hex 
+		if(strlen($option_value['image'])!='6'){
+			
+			$this->load->model('tool/image');
+			$json['success'] = "ok";
+			$json['imagesrc'] = $this->model_tool_image->resize($option_value['image'], $this->config->get('config_image_thumb_width'), $this->config->get('config_image_thumb_height'));
+			$json['bigimagesrc'] = $this->model_tool_image->resize($option_value['image'], $this->config->get('config_image_popup_width'), $this->config->get('config_image_popup_height'));
+			$this->response->setOutput(json_encode($json));
+			return;
+		}else{//hex
+			$pattern = '/(_col)(([a-fA-F]|[0-9]){2}){3}(.)/i';
+			$sust = '.';
+			$imagesrc = preg_replace($pattern, $sust, $imagesrc);
+			$bigimagesrc = preg_replace($pattern, $sust, $bigimagesrc);
+			
+			if (!file_exists(DIR_IMAGE . $imagesrc) || !is_file(DIR_IMAGE . $imagesrc) || !file_exists(DIR_IMAGE . $bigimagesrc) || !is_file(DIR_IMAGE . $bigimagesrc)) {
+				$json['success'] = 'ko';
+			}else{
+				$json['success'] = 'ok';
+				$infoImagesrc = pathinfo($imagesrc);
+				$infoBigimagesrc = pathinfo($bigimagesrc);
+				
+				$dirnameImagesrc = $infoImagesrc['dirname'];
+				$filenameImagesrc = $infoImagesrc['filename'];
+				$extImagesrc = $infoImagesrc['extension'];
+				$newFilenameImagesrc = $dirnameImagesrc . '/' . $filenameImagesrc. "_col" . $option_value['image'] . "." . $extImagesrc;
+				
+				$dirnameBigImagesrc = $infoBigimagesrc['dirname'];
+				$filenameBigImagesrc = $infoBigimagesrc['filename'];
+				$extBigImagesrc = $infoBigimagesrc['extension'];
+				$newFilenameBigImagesrc = $dirnameBigImagesrc . '/' . $filenameBigImagesrc. "_col" . $option_value['image'] . "." . $extBigImagesrc;
+				
+				if (!file_exists(DIR_IMAGE . $newFilenameBigImagesrc) || (filemtime(DIR_IMAGE . $bigimagesrc) > filemtime(DIR_IMAGE . $newFilenameBigImagesrc))) {
+					$imBigSrc = $this->gd_colorize(DIR_IMAGE . $bigimagesrc, hexdec(substr($option_value['image'],0,2)), hexdec(substr($option_value['image'],2,2)), hexdec(substr($option_value['image'],4,2)), true);
+					imagepng($imBigSrc, DIR_IMAGE . $newFilenameBigImagesrc);
+					$imSrc = imagecreatetruecolor($this->config->get('config_image_thumb_width'),$this->config->get('config_image_thumb_height'));
+					imagesavealpha($imSrc, true);
+					imagealphablending($imSrc, false);
+					imagecopyresized($imSrc, $imBigSrc, 0, 0, 0, 0, $this->config->get('config_image_thumb_width'),$this->config->get('config_image_thumb_height'), $this->config->get('config_image_popup_width'), $this->config->get('config_image_popup_height'));
+					imagepng($imSrc, DIR_IMAGE . $newFilenameImagesrc);
+					imagedestroy($imBigSrc);
+					imagedestroy($imSrc);
+				}
+			}
+		}
+		$json['imagesrc'] = HTTP_SERVER . 'image/' . $newFilenameImagesrc;
+		$json['bigimagesrc'] = HTTP_SERVER . 'image/' . $newFilenameBigImagesrc;
+		
+		$this->response->setOutput(json_encode($json));
+	}
+            ]]></add>
+        </operation>
+    </file>
+    <file path="catalog/model/catalog/product.php">
+        <operation>
+            <search><![CDATA[
+            public function getProductDiscounts($product_id) {
+            ]]></search>
+            <add position="before"><![CDATA[
+	public function getProductOptionValue($option_value_id) {
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_option_value WHERE product_option_value_id = '" . (int)$option_value_id . "'");
+		return $query->row;
+	}
+	
+	public function getOptionValue($option_value_id) {
+		
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "option_value ov LEFT JOIN " . DB_PREFIX . "option_value_description ovd ON (ov.option_value_id = ovd.option_value_id) WHERE ov.option_value_id = '" . (int)$option_value_id . "' AND ovd.language_id = '" . (int)$this->config->get('config_language_id') . "'");
+
+		return $query->row;
+	}
+            ]]></add>
+        </operation>
+    </file>
+    <file path="catalog/view/theme/*/template/product/product.tpl">
+        <operation>
+            <search><![CDATA[
+            <?php if ($option['type'] == 'radio') { ?>
+            ]]></search>
+            <add position="before"><![CDATA[
+			<?php if ($option['type'] == 'color') { ?>
+            <div class="form-group<?php echo ($option['required'] ? ' required' : ''); ?>">
+              <label class="control-label" for="input-option<?php echo $option['product_option_id']; ?>"><?php echo $option['name']; ?></label>
+              <select name="option[<?php echo $option['product_option_id']; ?>]" onchange="refreshimage(this.value);" id="input-option<?php echo $option['product_option_id']; ?>" class="form-control">
+                <option value=""><?php echo $text_select; ?></option>
+                <?php foreach ($option['product_option_value'] as $option_value) { ?>
+                <option value="<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+                <?php if ($option_value['price']) { ?>
+                (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+                <?php } ?>
+                </option>
+				<?php } ?>
+			  </select>
+				<script type="text/javascript"><!--
+					$(document).ready(function() {
+						//$('#color_option<?php echo $option['product_option_id']; ?>').trigger('change');
+					});
+				//--></script>
+			</div>
+			<?php } ?>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            <li><a class="thumbnail" href="<?php echo $popup; ?>" title="<?php echo $heading_title; ?>"><img src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a></li>
+            ]]></search>
+            <add position="replace"><![CDATA[
+			<li><div id="colorize_loading" style="display:none"><img src="catalog/view/theme/default/image/colorize_loading.gif" /></div><a class="thumbnail" href="<?php echo $popup; ?>" title="<?php echo $heading_title; ?>"><img id="image" src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" /></a></li>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            <?php echo $footer; ?>
+            ]]></search>
+            <add position="before"><![CDATA[
+<script type="text/javascript"><!--
+var colorize_thumb='<?php echo $thumb; ?>';
+var colorize_popup='<?php echo $popup; ?>';
+
+function refreshimage(color){
+	if(color==''){
+		$('#image').attr('src',colorize_thumb);
+		$('#image').parent().attr('href',colorize_popup);
+	}else{
+		$('#colorize_loading img').css('width',$('#image').css('width'));
+		$('#colorize_loading img').css('height',$('#image').css('height'));	
+		$('#colorize_loading').show();
+	
+		$.ajax({
+			url: 'index.php?route=product/product/imagecolres&color='+color+'&image=' + encodeURIComponent(colorize_thumb)+'&bigimage=' + encodeURIComponent(colorize_popup),
+			dataType: 'json',
+			success: function(json) {
+				if(json.success=='ok'){
+					$('#image').attr('src',json.imagesrc);
+					$('#image').parent().attr('href',json.bigimagesrc);
+				}
+				$('#colorize_loading').hide();
+			}
+		});
+	}
+}
+//--></script>
+<style>
+#colorize_loading{
+	position: absolute;
+	background-color: #fff;
+	opacity: 0.5;
+	width:100%;
+	text-align:center;
+	display:none;
+}
+</style>
+            ]]></add>
+        </operation>
+    </file>
+    <file path="system/library/cart.php">
+        <operation>
+            <search><![CDATA[
+            if ($option_query->row['type'] == 'select' || $option_query->row['type'] == 'radio' || $option_query->row['type'] == 'image') {
+            ]]></search>
+            <add position="replace"><![CDATA[
+			if ($option_query->row['type'] == 'select' || $option_query->row['type'] == 'radio' || $option_query->row['type'] == 'image' || $option_query->row['type'] == 'color') {
+            ]]></add>
+        </operation>
+    </file>
+</modification>

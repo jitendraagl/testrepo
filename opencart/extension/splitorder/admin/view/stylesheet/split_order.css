@@ -1,0 +1,168 @@
+
+/* Generic styles */
+
+body *
+{
+    box-sizing: border-box;
+}
+
+.opencart15 .update
+{
+    float: right;
+    margin: 10px 0 15px 0;
+}
+
+.clearfix
+{
+	clear: both;
+}
+
+.version
+{
+	display: block;
+    line-height: 16px;
+    padding-left: 20px;
+}
+
+.version.latest
+{
+	color: #479401;
+	background: url("http://thekrotek.com/images/latest.png") no-repeat;
+}
+
+.version.future
+{
+	background: url("http://thekrotek.com/images/future.png") no-repeat;
+}
+
+.version.update
+{
+	color: #ca3510;
+	background: url("http://thekrotek.com/images/update.png") no-repeat;
+}
+
+table.form
+{
+    margin-bottom: 0;
+}
+    
+.copyright
+{
+	background: #1e91cf;
+	color: #ffffff;
+	font-size: 125%;
+	padding: 10px;
+	border-color: #1978ab;
+	border-radius: 3px;
+	margin-top: 20px;
+}
+
+.copyright a
+{
+	color: #fffc00;
+}
+
+.opencart15 .copyright
+{
+	background: #666666 !important;
+	color: #ffffff !important;
+	border: none;
+	border-radius: 0;
+}
+
+.opencart15 td.copyright
+{
+	background: #efefef !important;
+	color: #222222 !important;
+	font-size: 100%;
+	padding: 7px;
+    border-bottom: 1px solid #dddddd;
+    border-right: 1px solid #dddddd;	
+}
+
+.opencart15 td.copyright a
+{
+	color: #003366;
+}
+
+td .checkbox-select
+{
+	margin-top: 10px;
+}
+
+.checkbox-select a
+{
+	cursor: pointer;
+}
+
+.radio-inline
+{
+    line-height: 24px;
+}
+
+.radio-inline input[type='radio']
+{
+    height: 20px;
+    line-height: 24px;
+    float: left;
+    margin-right: 5px;
+    margin-top: 1px;
+}
+
+.form-horizontal .control-label
+{
+    text-align: left;
+    padding-left: 20px;
+    font-size: 110%;
+    font-weight: normal;
+}
+
+.settings-title
+{
+    margin: 20px 0;
+}
+
+.scrollbox,
+td select,
+td input[type="text"]
+{
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    height: auto;
+    width: 250px !important;
+    margin: 0;
+    padding: 5px !important;
+    text-align: left;
+    transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
+}
+
+input[type="radio"]
+{
+    margin-right: 5px !important;
+}
+
+.scrollbox > div
+{
+    overflow: hidden;
+}
+
+.scrollbox
+{
+	height: 150px;
+}
+
+.table thead td span[data-toggle="tooltip"]::after,
+label.control-label span::after
+{
+    cursor: pointer;
+}
+
+.input-text
+{
+    display: block;
+    float: left;
+    line-height: 100%;
+    padding-top: 9px;
+}

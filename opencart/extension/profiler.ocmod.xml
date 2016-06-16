@@ -1,0 +1,116 @@
+<modification>
+	<id>Opencart Profiler 1.1 for 1.5.1 -  1.5.5.x</id>
+	<version>1.5.x</version>
+	<vqmver required="true">1.0.0</vqmver>
+	<author>OCShop|| Please visit modules.ocshop.biz</author>
+
+	<file name="system/startup.php">
+		<operation error="log">
+			<search position="after"><![CDATA[error_reporting(E_ALL);]]></search>
+				<add><![CDATA[
+					$time = microtime();
+					$GLOBALS['start'] = $time;
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="system/library/response.php">
+		<operation error="log">
+			<search position="after"><![CDATA[echo $ouput;]]></search>
+
+			<add><![CDATA[
+				$time = microtime();
+				$time = explode(' ', $time);
+				$time = $time[1] + $time[0];
+				$finish = $time;
+				$start = explode(' ', $GLOBALS['start']);
+				$start = $start[1] + $start[0];
+				$total_time = round(($finish - $start), 4);
+				$queries = $GLOBALS['sql'];
+				echo '<div id="debug" style="position:relative; bottom:0; z-index:1000; width:100%;min-height:100px; padding:20px; background: darkred; "><div style="width:1000px;margin:0 auto;">';
+				echo '<div style="color:white; font-size:14px; line-height:20px">Total time ' . $total_time. ' seconds | ';
+				echo 'Total queries:' . count($GLOBALS['sql']) . '</div>';
+				$query_times  = array();
+				$query_counts = array();
+				foreach ($queries as $query_profile) {
+					list($query, $time, $controller) = explode ('[sep]', $query_profile);
+					// Remove single quotes
+					$query = str_replace("\\'", '', $query);
+					// Remove values from inside single quotes
+					$query = preg_replace('/\'[^\']*\'/', "'<span style='background: #ccc;'>...</span>'", $query);
+					// Remove unquoted IDs
+					$query = preg_replace('/\b\d+\b/', "<span style='background: #ccc;'>&lt;number&gt;</span>", $query);
+					$querytime = round($time, 5);
+					if (!isset($query_times[$query])) {
+						$query_times[$query]  = 0.0;
+						$query_counts[$query] = 0;
+					}
+					$query_times[$query] += $querytime;
+					$query_counts[$query]++;
+				}
+				// Sort the profile summary putting the slowest columns at the top
+				arsort($query_times);
+				echo '<style>
+					.profile-summary {
+						background: white;
+						border-collapse: collapse;
+					}
+					.profile-summary th,
+					.profile-summary td {
+						border: 1px solid #ccc;
+						padding: 2px 8px;
+						vertical-align: top;
+					}
+					.profile-summary td.time {
+						text-align: right;
+					}
+				</style>';
+				echo '<table class="profile-summary">';
+				echo '<tr>
+					<th>Time</th>
+					<th>Count</th>
+					<th>Query</th>
+				</tr>';
+				foreach ($query_times as $query_pattern => $time) {
+					echo '<tr>
+						<td class="time">' . number_format($time, 5) . 's</td>
+						<td>' . $query_counts[$query_pattern] . '</td>
+						<td>' . $query_pattern . '</td>
+					</tr>';
+				};
+				echo '</table>';
+				echo '</div></div>';
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="system/engine/controller.php">
+		<operation error="log">
+			<search position="before"><![CDATA[	$this->registry = $registry;]]></search>
+			<add><![CDATA[
+			$GLOBALS['controller_name'] = get_class ($this);
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="system/library/db.php">
+		<operation error="log">
+			<search position="after"><![CDATA[public function query($sql) {]]></search>
+
+			<add><![CDATA[$starttime = microtime(true);
+			]]></add>
+		</operation>
+
+		<operation error="log">
+			<search position="replace"><![CDATA[return $this->driver->query($sql);]]></search>
+			<add><![CDATA[
+			$result = $this->driver->query($sql);
+			$finishtime = microtime(true) - $starttime;
+			if (!isset($GLOBALS['controller_name'])) $GLOBALS['controller_name'] = '';
+			$GLOBALS['sql'][] = $sql. '[sep]'. $finishtime . '[sep]'.	 ($GLOBALS['controller_name']) ;
+			//print_r ($GLOBALS['controller_name']);
+			return $result;
+			]]></add>
+		</operation>
+	</file>
+</modification>

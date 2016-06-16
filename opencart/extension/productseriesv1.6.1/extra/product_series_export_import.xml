@@ -1,0 +1,114 @@
+<modification>
+	<id><![CDATA[Product Series - ExportImport]]></id>
+	<version><![CDATA[1.4]]></version>
+	<vqmver><![CDATA[2.1.6]]></vqmver>
+	<author><![CDATA[WeDoWeb.com.au | contact@wedoweb.com.au]]></author>
+	<file name="admin/model/tool/export.php">
+		<operation error="log">
+			<search position="after"><![CDATA[$minimum = $product['minimum'];]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$product_series_master = $product['product_series_master'];
+			$product_series_image = $product['product_series_image'];
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="before"><![CDATA[if (count($related) > 0) {]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			if($product_series_master != '')
+			{
+				if($product_series_master == 'master')
+					$product_series_master = '0';
+					
+				$this->load->model('catalog/product_master');
+				$this->model_catalog_product_master->editLink(array(
+					'product_id' => $productId,
+					'master_product_id' => $product_series_master,
+					'special_attribute_group_id' => '2' //2 is image
+				));
+				
+				$this->load->model('catalog/product_special_attribute');
+				$this->load->model('catalog/special_attribute');
+				$this->model_catalog_product_special_attribute->editProductSpecialAttribute(array(
+					'product_id' => $productId,
+					'special_attribute_id' => $this->model_catalog_special_attribute->getImageId(array(
+						'special_attribute_group_id' => '2',
+						'product_series_image' => $product_series_image
+					))
+				));
+			}
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$minimum = $this->getCell($data,$i,$j++,'1');]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$product_series_master = $this->getCell($data,$i,$j++,'');
+			$product_series_image = $this->getCell($data,$i,$j++,'');
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$product['minimum'] = $minimum;]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$product['product_series_master'] = $product_series_master;
+			$product['product_series_image'] = $product_series_image;
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="replace"><![CDATA[, "minimum"]]></search>
+			<add><![CDATA[, "minimum", "product_series_master", "product_series_image"]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$query .= "  p.minimum, ";]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$query .= "  pm.master_product_id AS 'product_series_master', "; //master product
+			$query .= "  sa.special_attribute_value AS 'product_series_image', "; //product series image
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="before"><![CDATA[$query .= "GROUP BY p.product_id ";]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$query .= " LEFT JOIN " . DB_PREFIX . "product_master pm on pm.product_id = p.product_id ";
+			$query .= " LEFT JOIN " . DB_PREFIX . "product_special_attribute psa ON psa.product_id = p.product_id ";
+			$query .= " LEFT JOIN " . DB_PREFIX . "special_attribute sa ON sa.special_attribute_id = psa.special_attribute_id ";
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('minimum')]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('product_series_master'),4)+1);
+			$worksheet->getColumnDimensionByColumn($j++)->setWidth(max(strlen('product_series_image'),12)+1);
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$this->setCell( $worksheet, $i, $j++, 'minimum', $boxFormat );]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$this->setCell( $worksheet, $i, $j++, 'product_series_master', $boxFormat );
+			$this->setCell( $worksheet, $i, $j++, 'product_series_image', $boxFormat );
+			//EOF Product Series
+			]]></add>
+		</operation>
+		<operation error="log">
+			<search position="after"><![CDATA[$this->setCell( $worksheet, $i, $j++, $row['minimum'] );]]></search>
+			<add><![CDATA[
+			//BOF Product Series
+			$this->setCell( $worksheet, $i, $j++, $row['product_series_master'] == '0' ? 'master' : $row['product_series_master'] );
+			$this->setCell( $worksheet, $i, $j++, $row['product_series_image'] );
+			//EOF Product Series
+			]]></add>
+		</operation>
+	</file>
+</modification>

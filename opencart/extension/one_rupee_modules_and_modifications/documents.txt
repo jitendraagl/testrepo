@@ -1,0 +1,10 @@
+Product Shipping
+1. ocomod Productshippingvqmodv1.1oc2-x.ocmod.zip
+2. upload extracted folders in root
+
+COD Charges
+1. upload extracted copy of PaymentTypeFee
+2. made some changes in /catalog/model/total/payment_type_fee.php - and admin/controller/total/payment_type_fee.php
+3. cod charges apply on ocmod xml import
+
+

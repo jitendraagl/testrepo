@@ -1,0 +1,30 @@
+<modification>
+        <name>One Rupee Module</name>
+        <id>One Rupee Module</id>
+        <code>154255</code>
+        <version>1.0.0.0</version>
+        <author>Jitendra</author>
+        <link>adglobal360.com</link>
+        <file path="catalog/model/total/coupon.php">
+                <operation>
+                        <search ><![CDATA[
+                        if ($product['tax_class_id']) {
+                        ]]></search>
+                        <add position="before"><![CDATA[
+                        if ($this->config->get('coupon_onerupee_status') ) {
+                            if( strtolower($this->config->get('coupon_onerupee_coupon_code')) == strtolower($this->session->data['coupon']) ) {
+                                $product_price = $this->config->get('coupon_onerupee_product_price');
+
+                                $quantity = ($this->config->get('coupon_onerupee_quantity') <= 0 ) ? 1 : $this->config->get('coupon_onerupee_quantity');
+                                $quantity = ( ( $product['quantity'] < $quantity ) ? $product['quantity'] : $quantity );
+
+                                $discount = 0;
+                                if($product['price'] > $product_price)
+                                    $discount = ($product['price'] - $product_price) * $quantity;
+                            }
+                        }
+
+                        ]]></add>
+                </operation>
+        </file>
+</modification>

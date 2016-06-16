@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<name>SIZE CHART</name>
+	<version>2.x</version>
+	<author>contact@onjection.com</author>
+	<code>onj_size_chart</code>
+	<link>www.onjection.com</link>
+	<file path="catalog/controller/product/product.php">
+		<operation>
+			<search><![CDATA[public function index() {]]></search>
+			<add  position="before" ><![CDATA[
+			public function onj_size_chart(&$data) {
+			
+			$this->load->model('catalog/size_chart');
+				$this->load->model('tool/image');
+				$isinstall = $this->model_catalog_size_chart->isinstall();
+				$isenable = $this->config->get('size_chart_status');
+				if($isinstall > 0 && $isenable == 1){
+					$issizechart = $this->model_catalog_size_chart->issizechart($this->request->get['product_id']);
+					
+					if($issizechart > 0){
+						$template_options = $this->model_catalog_size_chart->loadSizeChart($this->request->get['product_id']);
+						
+						$data['template_options'] = $template_options;
+						$size_chart_images = unserialize(stripslashes($template_options[0]['size_chart_images']));
+						
+						$i=1;
+					if(isset($size_chart_images) && $size_chart_images!='' && count($size_chart_images)){
+						foreach($size_chart_images as $key =>$value){
+							if($value['image'] !="no_image.png"){
+								if(is_numeric($value['width']) && is_numeric($value['height'])   ){
+										$width =  $value['width'];
+										$height =  $value['height'];
+									}else{
+										$width =  600;
+										$height =  400;
+									}
+								$data['size_chart_images'][$i]['image'] = $this->model_tool_image->resize($value['image'], $width, $height);	
+								$data['size_chart_images'][$i]['imagename'] = $value['imagename'];			
+								$i++;
+							}
+				}
+			}
+					 }elseif($issizechart <= 0) {
+						$cat = $this->model_catalog_size_chart->checkCategory( $this->request->get['product_id'] );
+						foreach($cat as $key=> $cats){
+							if($cats == $this->request->get['product_id']){
+								$template_options = $this->model_catalog_size_chart->catloadsizechart();
+								$data['template_options'] = $template_options;
+								$size_chart_images = unserialize(stripslashes($template_options[0]['size_chart_images']));
+								
+								$i=1;
+								if(isset($size_chart_images) && $size_chart_images!='' && count($size_chart_images)){
+									foreach($size_chart_images as $key =>$value){ 
+									if($value['image'] !="no_image.png"){
+										if(is_numeric($value['width']) && is_numeric($value['height']) ){
+												$width =  $value['width'];
+												$height =  $value['height'];
+											}else{
+												$width =  600;
+												$height =  400;
+											}
+										$data['size_chart_images'][$i]['image'] = $this->model_tool_image->resize($value['image'], $width, $height);	
+										$data['size_chart_images'][$i]['imagename'] = $value['imagename'];			
+										$i++;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			/*--------------onj_code_end-----------------*/
+			]]></add>
+		</operation>
+	<operation>
+			<search><![CDATA[public function index() {]]></search>
+			<add  position="after" ><![CDATA[
+			$this->onj_size_chart($data);
+				]]></add>
+		</operation>
+			
+	</file>
+	<file path="catalog/view/theme/*/template/product/product.tpl">
+		<operation>
+			<search><![CDATA[<?php echo $footer; ?>]]></search>
+			<add position="replace"><![CDATA[ 
+						<script type="text/javascript" src="catalog/view/javascript/jquery/sizechart.bpopup.min.js"></script>
+						<link rel="stylesheet" type="text/css" href="catalog/view/theme/default/stylesheet/sizechart_default.css" />
+						<?php echo $footer; ?>
+			
+			]]></add>
+		</operation>	
+		<operation>
+			<search><![CDATA[<?php if ($price) { ?>]]></search>
+			<add position="before"><![CDATA[ 
+		<!---------------Size Chart----------------------->
+				
+				<?php if(isset($template_options) && !empty($template_options)){   ?>
+					<a onclick="$('#sizechart-popup').bPopup({speed: 650, transition: 'slideIn',transitionClose: 'slideBack'});"><img src ="catalog/view/theme/default/image/size_chart_icon.jpg"></a><br />
+						<div id="sizechart-popup">
+							<span class="b-close">X</span>				
+							<h2 style="margin: 4px;font-weight: bold;font-size:16px;">SIZE CHART</h2>
+							<div class="content">
+							<?php
+								$template_content=$template_options[0]['content'];
+								$template_options=unserialize(stripslashes($template_options[0]['size_chart_data']));
+								$fields=array_shift($template_options);
+							?>
+							<?php $fieldss = array_filter($fields);
+							if (!empty($fieldss) || !empty($template_optionss) ){ ?>
+							<table id="module" class="list onj_table" >
+								<thead class = "onj_list">
+									<tr>
+										<?php foreach($fields as $values){
+												echo "<th>".$values."</th>";
+											} ?>
+									</tr>
+								</thead>
+								<?php
+									if (isset($template_options)){
+										foreach ($template_options as $template_option) { 
+											echo '<tr>';
+												foreach($template_option as $val){							
+													echo "<td>".$val."</td>";
+												} 
+											echo "</tr>";
+										}
+									}
+								?>
+							</table>
+							<?php } ?>
+							<div>
+								 <ul class="nav nav-pills nav-stacked onj-nav">
+									<?php $i=1; if(!empty($size_chart_images) && count($size_chart_images)){ ?>
+									<?php foreach($size_chart_images as $key => $value){ ?>
+										<li class="<?php if($i==1){echo "active"; }?>"><a href="#tab-image<?php echo $key;?>" data-toggle="tab" class=onj-tab><?php echo $value['imagename']; ?></a></li>
+									<?php $i++; } 
+									}
+									?> 
+								 </ul>
+							</div>
+				
+							 <div class="tab-content" style="margin-left:10px;">
+							<?php $i=1; if(!empty($size_chart_images) && count($size_chart_images)){ ?>
+							<?php foreach($size_chart_images as $key => $value){ ?>
+									<div id="tab-image<?php echo $key;?>" class = "sizechart_img tab-pane <?php if($i==1){echo "active"; }?>"><img src="<?php echo $value['image']; ?>"></div>
+								<?php $i++; } } ?> 
+							</div></div>
+							<?php if($template_content!='') {?><div id="special_note"><span>NOTE :</span> <?php echo $template_content;?></div> <?php } ?>
+						</div>					
+				<?php } ?>
+			<!---------------Size Chart----------------------->
+			]]></add>
+		</operation>
+	</file>
+</modification>

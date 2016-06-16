@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<name>Discount Percent</name>
+	<code>discount_percen%age</code>
+	<version>2.0.0</version>
+	<vqmver></vqmver>
+	<author>GreekOC</author>
+	<date>2015.08.01</date>
+	
+	<file path="admin/view/template/catalog/product_form.tpl">
+	   	<operation>
+            <search><![CDATA[<td class="text-right"><?php echo $entry_priority; ?></td>]]></search>
+            <add position="replace"><![CDATA[<td class="text-right">Discount %</td>]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[<td class="text-right"><input type="text" name="product_discount[<?php echo $discount_row; ?>][priority]" value="<?php echo $product_discount['priority']; ?>" placeholder="<?php echo $entry_priority; ?>" class="form-control" /></td>]]></search>
+            <add position="replace"><![CDATA[<td class="text-right"><input type="text" name="product_discount[<?php echo $discount_row; ?>][percent]" value="<?php echo((1 - $product_discount['price'] * (1/$price)) * 100); ?>" size="2" placeholder="%" onkeyup="calcPrice('discount', <?php echo $discount_row; ?>)" class="form-control"/></td>]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[html += '  <td class="text-right"><input type="text" name="product_discount[' + discount_row + '][priority]" value="" placeholder="<?php echo $entry_priority; ?>" class="form-control" /></td>';]]></search>
+            <add position="replace"><![CDATA[html += '<td class="right"><input type="text" name="product_discount[' + discount_row + '][percent]" value="" size="2" placeholder="%" onkeyup="calcPrice(\'discount\',' + discount_row +')" class="form-control"/></td>';]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[<td class="text-right"><?php echo $entry_priority; ?></td>]]></search>
+            <add position="replace"><![CDATA[<td class="text-right">Discount %</td>]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[<td class="text-right"><input type="text" name="product_special[<?php echo $special_row; ?>][priority]" value="<?php echo $product_special['priority']; ?>" placeholder="<?php echo $entry_quantity; ?>" class="form-control" /></td>]]></search>
+            <add position="replace"><![CDATA[<td class="text-right"><input type="text" name="product_special[<?php echo $special_row; ?>][percent]" value="<?php echo((1 - $product_special['price'] * (1/$price)) * 100); ?>" size="2" placeholder="%" onkeyup="calcPrice('special', <?php echo $special_row; ?>)" class="form-control"/></td>]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[html += '  <td class="text-right"><input type="text" name="product_special[' + special_row + '][priority]" value="" placeholder="<?php echo $entry_priority; ?>" class="form-control" /></td>';]]></search>
+            <add position="replace"><![CDATA[html += '    <td class="text-right"><input type="text" name="product_special[' + special_row + '][percent]" value="" size="2" placeholder="%"  onkeyup="calcPrice(\'special\',' + special_row +')" class="form-control"/></td>';]]></add>
+        </operation>
+		
+		<operation>
+            <search><![CDATA[<script type="text/javascript"><!--]]></search>
+            <add position="before"><![CDATA[<script type="text/javascript"><!--
+			
+			function calcPrice(name, row) {
+			
+				var perc = $('input[name=\'product_' + name + '[' + row + '][percent]\']').val();
+				var price = $('input[name=\'price\']').val();
+				var discounted_price = price * (1-(perc/100));
+				var calculated_percent = discounted_price * (1-(price/100));
+				
+				$('input[name=\'product_' + name + '[' + row + '][price]\']').val(discounted_price);
+			}
+			//--></script>]]></add>
+        </operation>
+		
+		<!-- Fix -->
+		<operation>
+            <search><![CDATA[<td class="text-left"><div class="input-group date">]]></search>
+            <add position="replace"><![CDATA[<td class="text-left" style="width: 20%;"><div class="input-group date">]]></add>
+        </operation>
+		<!-- End Fix -->
+		
+	</file>
+	
+	<file path="catalog/view/theme/*/template/product/product.tpl">
+		<operation>
+            <search><![CDATA[$reviews; ?></a> / <a href=""]]></search>
+            <add position="replace"><![CDATA[$reviews; ?></a> / <a href="http://www.boss.shoes/"]]></add>
+        </operation>
+	</file>	
+	
+	<file path="admin/controller/catalog/product.php">
+		<operation>
+            <search><![CDATA[$data['entry_quantity'] = $this->language->get('entry_quantity');]]></search>
+            <add position="after"><![CDATA[$data['entry_percent'] = $this->language->get('entry_percent');]]></add>
+        </operation>
+	</file>	
+	
+	<file path="admin/language/*/catalog/product.php">
+		<operation>
+            <search><![CDATA[$_['column_price']           = 'Price';]]></search>
+            <add position="after"><![CDATA[$_['entry_percent']       = 'Discount %';]]></add>
+        </operation>
+	</file>	
+	
+</modification>

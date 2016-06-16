@@ -1,0 +1,281 @@
+<modification>
+  <id>Amazon S3 Integration</id>
+  <version>2.4</version>
+  <vqmver>2.5.0</vqmver>
+  <author>Welford Media</author>
+
+  <!-- Support for downloads -->
+  <file name="admin/controller/catalog/download.php">
+    <operation>
+      <search position="after"><![CDATA[
+          $json['mask'] = $filename;
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status') && $this->config->get('amazon_s3_download_status')) {
+              $data = array(
+                  'path' => $this->config->get('amazon_s3_bucket_path') . 'download/',
+                  'bucket' => $this->config->get('amazon_s3_bucket'),
+                  'name' => $file,
+                  'content' => file_get_contents(DIR_DOWNLOAD . $file),
+                  'mime' => 'application/octet-stream',
+                  'name_remote' => sha1(uniqid(mt_rand(), true)) . '-' . $filename,
+              );
+
+              if (!$this->amazons3->upload($data, 'download')) {
+                  $log = new Log('amazon_s3.log');
+                  $log->write("Could not upload file " . $filename . " to S3");
+              }
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <file name="catalog/controller/account/download.php">
+    <operation>
+      <search position="after"><![CDATA[
+          if (file_exists($file)) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status') && $this->config->get('amazon_s3_download_status')
+              && $this->amazons3->fileExists($download_info['filename'])) {
+              $link = $this->amazons3->getDownloadLink($download_info['filename']);
+
+              if ($link) {
+                  $this->response->redirect($link);
+              }
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <!-- Cache invalidation -->
+  <file name="admin/model/catalog/category.php">
+    <operation>
+      <search position="before"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+
+              $image = $this->db->query("SELECT `image` FROM `" . DB_PREFIX . "category` WHERE `category_id` = " . (int) $category_id)->row['image'];
+
+              if ($image) {
+                  $this->amazons3->deleteFile($image, 'image');
+              }
+          }
+      ]]></add>
+    </operation>
+    <operation>
+      <search position="after"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $this->amazons3->deleteFile($data['image'], 'image');
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <file name="admin/model/catalog/manufacturer.php">
+    <operation>
+      <search position="before"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $image = $this->db->query("SELECT `image` FROM `" . DB_PREFIX . "manufacturer` WHERE `manufacturer_id` = " . (int) $manufacturer_id)->row['image'];
+
+              if ($image) {
+                  $this->amazons3->deleteFile($image, 'image');
+              }
+          }
+      ]]></add>
+    </operation>
+    <operation>
+      <search position="after"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $this->amazons3->deleteFile($data['image'], 'image');
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <file name="admin/model/catalog/product.php">
+    <operation>
+      <search position="before"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $images = $this->db->query("
+                  SELECT `image` FROM `" . DB_PREFIX . "product`
+                  WHERE `product_id` = " . (int) $product_id . "
+
+                  UNION ALL
+
+                  SELECT `image`
+                  FROM `" . DB_PREFIX . "product_image`
+                  WHERE `product_id` = " . (int) $product_id)->rows;
+
+              foreach ($images as $image) {
+                  $this->amazons3->deleteFile($image['image'], 'image');
+              }
+          }
+      ]]></add>
+    </operation>
+    <operation>
+      <search position="after"><![CDATA[
+          if (isset($data['image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $this->amazons3->deleteFile($data['image'], 'image');
+          }
+      ]]></add>
+    </operation>
+    <operation>
+      <search position="after"><![CDATA[
+          foreach ($data['product_image'] as $product_image) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $this->amazons3->deleteFile($product_image['image'], 'image');
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <file name="admin/model/design/banner.php">
+    <operation>
+      <search position="before"><![CDATA[
+          if (isset($data['banner_image'])) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $images = $this->db->query("SELECT `image` FROM `" . DB_PREFIX . "banner_image` WHERE `banner_id` = " . (int) $banner_id)->rows;
+
+              foreach ($images as $image) {
+                  $this->amazons3->deleteFile($image['image'], 'image');
+              }
+          }
+      ]]></add>
+    </operation>
+    <operation>
+      <search position="after"><![CDATA[
+          foreach ($data['banner_image'] as $banner_image) {
+      ]]></search>
+      <add><![CDATA[
+          if ($this->config->get('amazon_s3_status')) {
+              $this->amazons3->deleteFile($banner_image['image'], 'image');
+          }
+      ]]></add>
+    </operation>
+  </file>
+  <!-- Code in admin and catalog is identical -->
+  <file name="*/model/tool/image.php">
+    <operation>
+      <search position="after"><![CDATA[
+        $old_image = $filename;
+      ]]></search>
+      <add><![CDATA[
+            if ($this->config->get('amazon_s3_status')) {
+                $newImage = utf8_substr($filename, 0, utf8_strrpos($filename, '.')) . '-' . $width . 'x' . $height . '.' . $extension;
+
+                if ($this->config->get('amazon_s3_cloudfront_status')) {
+                    if ($this->config->get('amazon_s3_cloudfront_custom_domain')) {
+                        $imageUrl = '//' . $this->config->get('amazon_s3_cloudfront_custom_domain') .
+                            $this->config->get('amazon_s3_bucket_path') . 'image/' . $newImage;
+                    } else {
+                        $imageUrl = '//' . $this->config->get('amazon_s3_cloudfront_domain') . '.cloudfront.net' .
+                            $this->config->get('amazon_s3_bucket_path') . 'image/' . $newImage;
+                    }
+                } else {
+                    $imageUrl = '//' . $this->config->get('amazon_s3_bucket') . '.s3.amazonaws.com' .
+                        $this->config->get('amazon_s3_bucket_path') . 'image/' . $newImage;
+                }
+
+                if (!$this->amazons3->fileExists($newImage)) {
+                    $image = new Image(DIR_IMAGE . $old_image);
+                    $image->resize($width, $height);
+                    $imageContent = $image->getRawBytes();
+
+                    $data = array(
+                        'path' => $this->config->get('amazon_s3_bucket_path') . 'image/',
+                        'bucket' => $this->config->get('amazon_s3_bucket'),
+                        'name' => $newImage,
+                        'content' => $imageContent,
+                        'mime' => $image->getMimeType(),
+                    );
+
+                    if ($this->amazons3->upload($data, 'image')) {
+                        return $imageUrl;
+                    }
+
+                    // Upload failed;
+                    $log = new Log('amazon_s3.log');
+                    $log->write('Failed to upload image ' . $newImage);
+                } else {
+                    return $imageUrl;
+                }
+        }
+      ]]></add>
+    </operation>
+  </file>
+  <file name="system/engine/controller.php">
+    <operation>
+      <search position="after"><![CDATA[
+          public function __construct($registry) {
+      ]]></search>
+      <add><![CDATA[
+	      if (version_compare(VERSION, '2.0.3.1', '<=')) {
+         	 $registry->get('load')->library('amazons3');
+		  }
+
+          $amazons3 = new AmazonS3($registry);
+          $registry->set('amazons3', $amazons3);
+      ]]></add>
+    </operation>
+  </file>
+  <!-- Add a function to get image's raw bytes -->
+  <file name="system/library/image.php">
+    <operation>
+      <search position="before"><![CDATA[
+        public function __construct($file) {
+      ]]></search>
+      <add><![CDATA[
+        public function getRawBytes() {
+            ob_start();
+
+			/* Backwards compatibility */
+			if (isset($this->info) && isset($this->info['mime'])) {
+				$mime = $this->info['mime'];
+			} else {
+				$mime = $this->mime;
+			}
+
+            if (is_resource($this->image)) {
+                if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
+                    imagejpeg($this->image, NULL, 90);
+                } elseif($mime == 'image/png') {
+                    imagepng($this->image, NULL, 0);
+                } elseif($mime == 'image/gif') {
+                    imagegif($this->image, NULL);
+                }
+            }
+
+            return ob_get_clean();
+        }
+
+        public function getMimeType() {
+			/* Backwards compatibility */
+			if (isset($this->info) && isset($this->info['mime'])) {
+				$mime = $this->info['mime'];
+			} else {
+				$mime = $this->mime;
+			}
+
+            return $mime;
+        }
+      ]]></add>
+    </operation>
+  </file>
+</modification>

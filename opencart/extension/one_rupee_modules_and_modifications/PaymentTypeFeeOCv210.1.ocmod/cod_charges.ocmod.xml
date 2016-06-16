@@ -1,0 +1,74 @@
+<modification>
+        <name>Product Based COD Module</name>
+        <id>Product Based COD Module</id>
+        <code>154254</code>
+        <version>1.0.0.0</version>
+        <author>Jitendra</author>
+        <link>adglobal360.com</link>
+        <file path="admin/controller/catalog/product.php">
+                <operation>
+                        <search><![CDATA[
+                        $data['tab_design'] = $this->language->get('tab_design');
+                        ]]></search>
+                        <add  position="after"><![CDATA[
+                        $data['entry_cod_charges'] = $this->language->get('entry_cod_charges');
+                        ]]></add>
+                </operation>
+                <operation>
+                        <search ><![CDATA[
+                        $data['stock_statuses'] = $this->model_localisation_stock_status->getStockStatuses();
+                        ]]></search>
+                        <add position="before"><![CDATA[
+                        if (isset($this->request->post['cod_charges'])) {
+                            $data['cod_charges'] = $this->request->post['cod_charges'];
+                        } else if (isset($product_info)) {
+                            $data['cod_charges'] = $product_info['cod_charges'];
+                        } else {
+                            $data['cod_charges'] = '';
+                        }
+                        ]]></add>
+                </operation>
+        </file>
+        <file path="admin/language/english/catalog/product.php">
+                <operation>
+                        <search ><![CDATA[
+                        $_['entry_layout']           = 'Layout Override';
+                        ]]></search>
+                        <add position="after"><![CDATA[
+                        $_['entry_cod_charges']  = '<span data-toggle="tooltip" title="For product based cod charges module">COD Charges:</span>';
+                        ]]></add>
+                </operation>
+        </file>
+        <file path="admin/model/catalog/product.php">
+                <operation>
+                        <search ><![CDATA[
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product SET
+                        ]]>
+                        </search>
+                        <add position="replace"><![CDATA[
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product SET cod_charges = '". (float)$data['cod_charges'] ."', 
+                        ]]></add>
+                </operation>
+                <operation>
+                        <search ><![CDATA[
+                        $this->db->query("UPDATE " . DB_PREFIX . "product SET model
+                        ]]></search>
+                        <add position="replace"><![CDATA[
+                        $this->db->query("UPDATE " . DB_PREFIX . "product SET cod_charges = '". (float)$data['cod_charges'] ."', model 
+                        ]]></add>
+                </operation>
+        </file>
+        <file path="admin/view/template/catalog/product_form.tpl">
+                <operation>
+                        <search ><![CDATA[<input type="text" name="price" value="<?php echo $price; ?>" placeholder="<?php echo $entry_price; ?>" id="input-price" class="form-control" />]]></search>
+                        <add position="after" offset="2"><![CDATA[
+                        <div class="form-group">
+                <label class="col-sm-2 control-label" for="input-price"><?php echo $entry_cod_charges; ?></label>
+                <div class="col-sm-10">
+                  <input type="text" name="cod_charges" value="<?php echo $cod_charges; ?>" placeholder="<?php echo $cod_charges; ?>" id="cod_charges" class="form-control" />
+                </div>
+              </div>
+                        ]]></add>
+                </operation>
+        </file>
+</modification>

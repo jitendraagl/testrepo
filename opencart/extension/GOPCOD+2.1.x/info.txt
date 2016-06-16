@@ -1,0 +1,31 @@
+@extension-payment	GOP_COD
+@author-name		Michail Gkasios
+@copyright			Copyright (C) 2013 GKASIOS
+@license			GNU/GPL, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+-----------Installation------------
+
+1. Use Extension Installer or Copy the content of the folder upload, to your opencart installation keeping the folder structure.
+2. Login to the Open Cart admin section and go to Extensions > Order Totals
+3. Find GOP Cash On Delivery Fee in the list of extensions
+4. Click "Install" and then "Edit" the order total module settings
+5. Set Status to Enable and Save
+6. Go to Extensions > Payments
+7. Find GOP Cash on Delivery in the list of extensions
+8. Click "Install" and then "Edit" the payment module settings
+9. Set Extension Status to Enable and configure depending on your needs and Save
+10. Go to Extensions > Modifications
+11. Click the Refresh Button
+
+-----------Images Credits---------------
+
+downloaded from http://findicons.com
+
+Coins by VisualPharm (Ivan Boyko)(CC)
+
+
+------------Bug Report---------------
+
+bug@gkasios.com
+
+In Subject please type the extension name
